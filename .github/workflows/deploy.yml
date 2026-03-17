@@ -13,7 +13,7 @@ jobs:
 
       - name: sync
         run: |
-          rsync -av --deletes ./ ~/server/vm-api/
+          rsync -av --delete ./ ~/server/vm-api/
 
       - name: build and restart
         run: |
