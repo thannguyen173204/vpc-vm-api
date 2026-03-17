@@ -3,7 +3,7 @@ import {databaseConfig} from '../configs/database.config.js';
 
 dotenv.config();
 
-const port = process.env.PORT;
+const port = process.env.VM_PORT;
 
 export const serverStart = async (app) => {
     await databaseConfig();
