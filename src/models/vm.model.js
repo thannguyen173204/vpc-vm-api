@@ -51,22 +51,6 @@ const vmSchema = new mongoose.Schema({
         default: 'creating'
     },
 
-    step: {
-        type: String,
-        enum: [
-            'init',
-            'create_datastore',
-            'clone_disk',
-            'upload_vmx',
-            'register_vm',
-            'power_on',
-            'wait_ip',
-            'configure_guest',
-            'completed'
-        ],
-        default: 'init'
-    },
-
     error: {
         type: String,
         default: null
