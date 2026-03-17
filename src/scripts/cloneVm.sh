@@ -34,11 +34,3 @@ echo "[$(date +'%d-%m-%y %H:%M:%S')] Register VM"
 govc vm.register \
   -ds="${GOVC_DATASTORE}" \
   "${VM_NAME}/${VM_NAME}.vmx"
-
-echo "[$(date +'%d-%m-%y %H:%M:%S')] Power on VM"
-echo "[$(date +'%d-%m-%y %H:%M:%S')] $(govc vm.power -on "${VM_NAME}")"
-
-echo "[$(date +'%d-%m-%y %H:%M:%S')] Wait for vm ready"
-govc vm.ip -wait=5m "${VM_NAME}" > /dev/null 2>&1
-
-echo "[$(date +'%d-%m-%y %H:%M:%S')] Vm ready"

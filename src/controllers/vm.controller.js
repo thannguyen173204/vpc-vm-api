@@ -22,7 +22,8 @@ export const createVm = asyncHandler(async (req, res) => {
     }
 
     const vm = await VmServices.create(vmName, vmUsername, vmPassword, cpu, ram, disk, userName, userId, osName);
-    return res.status(201).json({ message: 'Lệnh tạo VM đã được đưa vào hàng đợi', vm });
+    
+    return res.status(201).json({ message: 'Tạo VM thành công', vm });
 });
 
 export const startVm = asyncHandler(async (req, res) => {
@@ -32,7 +33,7 @@ export const startVm = asyncHandler(async (req, res) => {
     if (!vmName) throw new ErrorResponse("Vui lòng cung cấp tên VM", 400);
 
     await VmServices.start(vmName, userId);
-    return res.status(200).json({ message: 'Đang khởi động VM...' });
+    return res.status(200).json({ message: 'Khởi động VM thành công' });
 });
 
 export const stopVm = asyncHandler(async (req, res) => {
@@ -42,7 +43,7 @@ export const stopVm = asyncHandler(async (req, res) => {
     if (!vmName) throw new ErrorResponse("Vui lòng cung cấp tên VM", 400);
 
     await VmServices.stop(vmName, userId);
-    return res.status(200).json({ message: 'Đã gửi lệnh tắt VM' });
+    return res.status(200).json({ message: 'Tắt VM thành công' });
 });
 
 export const restartVm = asyncHandler(async (req, res) => {
@@ -52,7 +53,7 @@ export const restartVm = asyncHandler(async (req, res) => {
     if (!vmName) throw new ErrorResponse("Vui lòng cung cấp tên VM", 400);
 
     await VmServices.restart(vmName, userId);
-    return res.status(200).json({ message: 'Đang khởi động lại VM...' });
+    return res.status(200).json({ message: 'Khởi động lại VM thành công' });
 });
 
 export const deleteVm = asyncHandler(async (req, res) => {
@@ -70,6 +71,7 @@ export const getVm = asyncHandler(async (req, res) => {
     const vms = await VmServices.findManyByUser(userId);
     return res.status(200).json({ message: 'Lấy danh sách VM thành công', vms });
 });
+
 export const configVm = asyncHandler(async (req, res) => {
     const { vmName, cpu, ram, disk, vmPassword } = req.body;
     const userId = req.user._id;
@@ -77,10 +79,11 @@ export const configVm = asyncHandler(async (req, res) => {
     if (!vmName || !cpu || !ram || !disk || !vmPassword) {
         throw new ErrorResponse("Vui lòng điền đủ thông số CPU, RAM, Disk và Mật khẩu VM", 400);
     }
+    
     const vm = await VmServices.configHardware(vmName, userId, cpu, ram, disk, vmPassword);
     
     return res.status(200).json({ 
-        message: 'Lệnh cấu hình VM đã được thực thi. VM đang khởi động lại...', 
+        message: 'Cấu hình VM thành công', 
         vm 
     });
 });

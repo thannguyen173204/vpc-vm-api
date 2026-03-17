@@ -42,13 +42,11 @@ const vmSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: [
-            'creating',
             'running',
             'pending',
             'stopped',
             'failed'
-        ],
-        default: 'creating'
+        ]
     },
 
     error: {
