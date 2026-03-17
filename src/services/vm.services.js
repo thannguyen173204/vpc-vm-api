@@ -34,6 +34,15 @@ class VmServices {
             throw new Error(`Lỗi khởi tạo VM: ${error.message}`);
         }
     }
+    changeHardware = async (vmName, cpu, ram, disk) => {
+        console.log(`[Hardware] Đang cấu hình CPU: ${cpu}, RAM: ${ram}MB, Disk: ${disk}GB cho ${vmName}`);
+
+        await cmdService('govc', ['vm.change', '-vm', vmName, '-c', cpu.toString(), '-m', ram.toString()]);
+
+        if (disk > 10) {
+            await cmdService('govc', ['vm.disk.change', '-vm', vmName, '-size', `${disk}G`]);
+        }
+    }
 
     configHardware = async (vmName, userId, cpu, ram, disk, vmPassword) => {
         const vm = await DatabaseService.find(Vm, { vm_name: vmName, user_id: userId });
