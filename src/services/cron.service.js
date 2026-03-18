@@ -2,7 +2,6 @@ import cron from 'node-cron';
 import Vm from '../models/vm.model.js';
 import DatabaseService from './db.services.js';
 import { cmdService } from './cli.services.js';
-import dayjs from 'dayjs';
 
 
 class CronServices {
