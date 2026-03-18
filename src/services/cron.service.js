@@ -21,18 +21,28 @@ class CronServices {
                 const vms = await DatabaseService.findMany(Vm, {
                     status: { $nin: ['creating', 'pending'] }
                 });
-                for (const vm of vms) {
-
-                }
-
                 for (const dbVm of vms) {
                     const status = runningVms.has(dbVm.vm_name) ? 'running' : 'stopped';
 
-                    if (dbVm.status !== status) {
-                        const info = await cmdService('govc', ['vm.info', dbVm.vm_name]).stdout;
-                        const status2 = info.split('Power state: ')[1].split(' ')[0].trim()==='poweredOn'?'running':'stopped';
-                        const ip = info.split('IP address: ')[1].split(' ')[0].trim();
-                        await DatabaseService.updateById(Vm, dbVm._id, { ip_address: ip===''?null:ip, status: status2 });
+                    if (dbVm.status !== status || (status === 'running' && !dbVm.ip_address)) {
+                        const info = (await cmdService('govc', ['vm.info', dbVm.vm_name], { silent: true })).stdout;
+
+                        const powerMatch = info.match(/Power state:\s*(.*)/i);
+                        const ipMatch = info.match(/IP address:\s*(.*)/i);
+
+                        const realPower = powerMatch ? powerMatch[1].trim() : '';
+                        const realIp = ipMatch ? ipMatch[1].trim() : '';
+
+                        const status2 = realPower === 'poweredOn' ? 'running' : 'stopped';
+                        const newIp = realIp === '' ? null : realIp;
+
+                        if (dbVm.status !== status2 || dbVm.ip_address !== newIp) {
+                            await DatabaseService.updateById(Vm, dbVm._id, {
+                                ip_address: newIp,
+                                status: status2
+                            });
+                            console.log(`[ĐỒNG BỘ] Cập nhật ${dbVm.vm_name} -> Trạng thái: ${status2}, IP: ${newIp || 'null'}`);
+                        }
                     }
                 }
             } catch (error) {
