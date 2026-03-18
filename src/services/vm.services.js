@@ -1,4 +1,4 @@
-import DatabaseService from "./db.service.js";
+import DatabaseService from "./db.services.js";
 import { cmdService } from "./cli.services.js";
 import Vm from "../models/vm.model.js";
 
