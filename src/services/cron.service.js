@@ -27,8 +27,8 @@ class CronServices {
                     if (dbVm.status !== status || (status === 'running' && !dbVm.ip_address)) {
                         const info = (await cmdService('govc', ['vm.info', dbVm.vm_name], { silent: true })).stdout;
 
-                        const powerMatch = info.match(/Power state:\s*(.*)/i);
-                        const ipMatch = info.match(/IP address:\s*(.*)/i);
+                        const powerMatch = info.match(/Power state:[ \t]*(.*)/i);
+                        const ipMatch = info.match(/IP address:[ \t]*(.*)/i);
 
                         const realPower = powerMatch ? powerMatch[1].trim() : '';
                         const realIp = ipMatch ? ipMatch[1].trim() : '';
