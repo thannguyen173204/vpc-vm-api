@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import { databaseConfig } from '../configs/database.config.js';
-import cronService from './cron.service.js';
+import cronService from './cron.services.js';
 import dayjs from 'dayjs';
 dotenv.config();
 
@@ -10,7 +10,7 @@ const originalError = console.error;
 
 export const serverStart = async (app) => {
     console.log = (...args) => {
-        originalLog(`[${dayjs().format('YY-MM-DD HH:mm:ss')}] [INFO]`, ...args);
+        originalLog(`[${dayjs().format('DD-MM-YY HH:mm:ss')}] [INFO]`, ...args);
     };
 
     console.error = (...args) => {

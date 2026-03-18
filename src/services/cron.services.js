@@ -40,7 +40,7 @@ class CronServices {
                                 ip_address: newIp,
                                 status: status2
                             });
-                            console.log(`[ĐỒNG BỘ] Cập nhật ${dbVm.vm_name} -> Trạng thái: ${status2}, IP: ${newIp || 'null'}`);
+                            console.log(`[SYNC] Cập nhật ${dbVm.vm_name} -> Trạng thái: ${status2}, IP: ${newIp || 'null'}`);
                         }
                     }
                 }
