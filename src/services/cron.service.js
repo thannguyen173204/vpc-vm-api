@@ -6,9 +6,8 @@ import { cmdService } from './cli.services.js';
 
 class CronServices {
     startPolling = () => {
-        cron.schedule('*/30 * * * * *', async () => {
+        cron.schedule('*/5 * * * * *', async () => {
             try {
-                console.log('polling now')
                 const res = await cmdService('govc', [
                     'find', '/',
                     '-type', 'm',
@@ -49,7 +48,7 @@ class CronServices {
                 console.error("Lỗi Cronjob Polling:", error);
             }
         });
-        console.log("🕒 Hệ thống Polling giám sát (Bản Siêu Nhẹ) đã khởi động!");
+        console.log("Polling started");
     }
 }
 
