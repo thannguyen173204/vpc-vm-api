@@ -1,8 +1,6 @@
-import dotenv from 'dotenv';
 import { databaseConfig } from '../configs/database.config.js';
 import cronService from './cron.services.js';
 import dayjs from 'dayjs';
-dotenv.config();
 
 const port = process.env.VM_PORT;
 const originalLog = console.log;
