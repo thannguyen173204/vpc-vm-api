@@ -1,8 +1,9 @@
 import express from 'express';
-import { createVm, deleteVm, restartVm, startVm, stopVm, getVm, configVm } from '../controllers/vm.controller.js';
+import { createVm, deleteVm, restartVm, startVm, stopVm, getVm, configVm, getSystemStats } from '../controllers/vm.controller.js';
 
 export const vmRoute = express.Router();
 
+vmRoute.get('/system-stats', getSystemStats);
 
 vmRoute.post('/create', createVm);
 vmRoute.post('/start', startVm);
