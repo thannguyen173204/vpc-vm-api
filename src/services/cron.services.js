@@ -6,7 +6,7 @@ import { cmdService } from './cli.services.js';
 
 class CronServices {
     startPolling = () => {
-        cron.schedule('*/5 * * * * *', async () => {
+        cron.schedule('*/1 * * * * *', async () => {
             try {
                 const res = await cmdService('govc', [
                     'find', '/',
