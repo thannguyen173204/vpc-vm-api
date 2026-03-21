@@ -3,17 +3,17 @@ import jwt from 'jsonwebtoken';
 export const verifyToken = async (req, res, next) => {
     const header = req.headers.authorization;
     if (!header || !header.startsWith('Bearer ')) {
-        return res.status(401).json('You are not authenticated');
+        return res.status(401).json('Bạn chưa đang nhập');
     }
     const token = header.split(' ')[1];
-    if (!token) return res.status(401).json('You are not authenticated');
+    if (!token) return res.status(401).json('Bạn chưa đang nhập');
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, duser) => {
         if (err) {
-            return res.status(403).json('Token is not valid')
+            return res.status(401).json('Access Token đã hết hạn')
         };
         try {
             const user = await User.findById(duser.user_id);
-            if (!user) return res.status(404).json('No user found');
+            if (!user) return res.status(404).json('Không tìm thấy User');
             req.user = user;
             next();
         } catch (error) {
