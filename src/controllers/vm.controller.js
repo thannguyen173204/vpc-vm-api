@@ -87,11 +87,14 @@ export const configVm = asyncHandler(async (req, res) => {
         vm 
     });
 });
-export const getSystemStats = asyncHandler(async (req, res) => {
-    const stats = await VmServices.systemStat();
-    
-    return res.status(200).json({ 
-        message: 'Lấy thông số hệ thống ESXi thành công', 
-        stats 
-    });
-});
+export const getSystemStats = async (req, res, next) => {
+    try {
+        const timeRange = req.query.timeRange || '1h'; 
+        
+        const stats = await VmServices.systemStat(timeRange); 
+        
+        res.status(200).json({ success: true, stats });
+    } catch (error) {
+        next(error);
+    }
+}

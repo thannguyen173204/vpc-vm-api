@@ -87,7 +87,7 @@ class VmServices {
         return await DatabaseService.findMany(Vm, { user_id: userId });
     }
 
-    systemStat = async () => {
+    systemStat = async (timeRange = '1h') => {
         try {
             const { host, disk } = await EsxiServices.getHostAndDiskStats();
 
@@ -101,23 +101,24 @@ class VmServices {
             const diskTotalGB = disk.capacity / (1024 ** 3);
             const diskFreeGB = disk.free / (1024 ** 3);
 
-            const historyData = await MetricsServices.getHistoryData(host);
+            // BẮT BUỘC TRUYỀN timeRange XUỐNG DƯỚI NÀY
+            const historyData = await MetricsServices.getHistoryData(host, timeRange);
 
             return {
                 cpu: {
                     percent: parseFloat(cpuPercent),
                     detail: `${host.cpuUsed} / ${totalCpuMhz} MHz`,
-                    totalCores: host.cpuCores // Trả về tổng core để chặn trên UI
+                    totalCores: host.cpuCores
                 },
                 ram: {
                     percent: ((ramUsedMB / ramTotalMB) * 100).toFixed(1),
                     detail: `${(ramUsedMB / 1024).toFixed(1)} / ${(ramTotalMB / 1024).toFixed(1)} GB`,
-                    availableMB: Math.floor(ramAvailableMB) // Trả về số MB còn trống
+                    availableMB: Math.floor(ramAvailableMB)
                 },
                 disk: {
                     percent: (((diskTotalGB - diskFreeGB) / diskTotalGB) * 100).toFixed(1),
                     detail: `${(diskTotalGB - diskFreeGB).toFixed(1)} / ${diskTotalGB.toFixed(1)} GB`,
-                    availableGB: Math.floor(diskFreeGB) // Trả về số GB còn trống
+                    availableGB: Math.floor(diskFreeGB)
                 },
                 history: historyData
             };
