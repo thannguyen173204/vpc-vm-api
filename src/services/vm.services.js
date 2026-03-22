@@ -174,17 +174,16 @@ class VmServices {
                 const ramRaw = formatData(promRam);
 
                 historyData = cpuRaw.map((item, index) => {
-                    const cpuTotalMhz = host.cpuMhz * host.cpuCores;
-                    const cpuPercentValue = (item.value / cpuTotalMhz) * 100;
-
+                    const totalCpuMhz = host.cpuMhz * host.cpuCores;
+                    const cpuInPercent = (item.value / totalCpuMhz) * 100;
                     let ramVal = ramRaw[index] ? ramRaw[index].value : 0;
-
                     if (ramVal > 100) {
                         ramVal = (ramVal / (host.ramTotal / (1024 * 1024))) * 100;
                     }
+
                     return {
                         time: item.time,
-                        cpu: parseFloat(item.value.toFixed(1)),
+                        cpu: parseFloat(cpuInPercent.toFixed(1)), // Kết quả sẽ ra ~9.6, ~10.2... cực đẹp
                         ram: parseFloat(ramVal.toFixed(1))
                     };
                 });
