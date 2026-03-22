@@ -161,15 +161,25 @@ class VmServices {
 
                 const formatData = (promData) => {
                     if (!promData.data?.data?.result || promData.data.data.result.length === 0) return [];
+
                     return promData.data.data.result[0].values.map(item => {
+                        // item[0] là timestamp (giây) từ Prometheus
                         const date = new Date(item[0] * 1000);
+
+                        // Sử dụng Intl.DateTimeFormat để ép về múi giờ Việt Nam (UTC+7)
+                        const timeString = date.toLocaleTimeString('en-GB', {
+                            timeZone: 'Asia/Ho_Chi_Minh',
+                            hour12: false,
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+
                         return {
-                            time: `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`,
+                            time: timeString, // Giờ đã được cộng 7 và format đẹp: "13:45"
                             value: parseFloat(item[1])
                         };
                     });
                 };
-
                 const cpuRaw = formatData(promCpu);
                 const ramRaw = formatData(promRam);
 
