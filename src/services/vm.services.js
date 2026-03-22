@@ -1,6 +1,9 @@
 import DatabaseService from "./db.services.js";
 import { cmdService } from "./cli.services.js";
 import Vm from "../models/vm.model.js";
+import axios from 'axios';
+
+const PROMETHEUS_API = 'http://minicloud-prometheus:9090/api/v1';
 
 class VmServices {
     create = async (vmName, vmUsername, vmPassword, cpu, ram, disk, userName, userId, osName) => {
@@ -52,6 +55,7 @@ class VmServices {
         }
         await DatabaseService.updateById(Vm, vm._id, { cpu, ram, disk });
     }
+    
     clone = async (fullVmName, osName) => {
         const scriptPath = process.env.CLONE_VM_SCRIPT;
         await cmdService('bash', [scriptPath], {
@@ -104,10 +108,9 @@ class VmServices {
     findManyByUser = async (userId) => {
         return await DatabaseService.findMany(Vm, { user_id: userId });
     }
+    
     systemStat = async () => {
         try {
-            // Lọc CPU và RAM trực tiếp bằng jq
-            // Chúng ta lấy các key camelCase như đã test: cpuMhz, numCpuCores, memorySize, overallCpuUsage, overallMemoryUsage
             const hostCmd = `govc host.info -json | jq '.hostSystems[0].summary | {
                 cpuMhz: .hardware.cpuMhz,
                 cpuCores: .hardware.numCpuCores,
@@ -116,13 +119,11 @@ class VmServices {
                 ramUsedMB: .quickStats.overallMemoryUsage
             }'`;
 
-            // Lọc Disk trực tiếp từ datastore "data"
             const diskCmd = `govc datastore.info -json data | jq '.datastores[0].summary | {
                 capacity: .capacity,
                 free: .freeSpace
             }'`;
 
-            // Thực thi song song để tối ưu thời gian phản hồi
             const [hostRes, diskRes] = await Promise.all([
                 cmdService('sh', ['-c', hostCmd], { silent: true }),
                 cmdService('sh', ['-c', diskCmd], { silent: true })
@@ -131,7 +132,6 @@ class VmServices {
             const host = JSON.parse(hostRes.stdout);
             const disk = JSON.parse(diskRes.stdout);
 
-            // Tính toán các chỉ số phần trăm
             const totalCpuMhz = host.cpuMhz * host.cpuCores;
             const cpuPercent = ((host.cpuUsed / totalCpuMhz) * 100).toFixed(1);
 
@@ -143,6 +143,58 @@ class VmServices {
             const diskFreeGB = disk.free / (1024 ** 3);
             const diskUsedGB = diskTotalGB - diskFreeGB;
             const diskPercent = ((diskUsedGB / diskTotalGB) * 100).toFixed(1);
+
+            // ==============================================================
+            // PHẦN MỚI: GỌI PROMETHEUS ĐỂ LẤY LỊCH SỬ CHO BIỂU ĐỒ LINE CHART
+            // ==============================================================
+            const end = new Date().toISOString();
+            const start = new Date(Date.now() - 60 * 60 * 1000).toISOString(); // 1 tiếng trước
+            const step = '1m'; // Mỗi phút 1 điểm
+
+            let historyData = [];
+
+            try {
+                const queryCpu = 'vmware_host_cpu_usage_average'; 
+                const queryRam = 'vmware_host_memory_usage'; // Tên biến RAM chuẩn mà bạn vừa check
+
+                const [promCpu, promRam] = await Promise.all([
+                    axios.get(`${PROMETHEUS_API}/query_range`, { params: { query: queryCpu, start, end, step } }),
+                    axios.get(`${PROMETHEUS_API}/query_range`, { params: { query: queryRam, start, end, step } })
+                ]);
+
+                // Hàm format data từ Prometheus
+                const formatData = (promData) => {
+                    if (!promData.data?.data?.result || promData.data.data.result.length === 0) return [];
+                    return promData.data.data.result[0].values.map(item => {
+                        const date = new Date(item[0] * 1000);
+                        return {
+                            time: `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`,
+                            value: parseFloat(item[1])
+                        };
+                    });
+                };
+
+                const cpuRaw = formatData(promCpu);
+                const ramRaw = formatData(promRam);
+
+                // Gộp Data CPU và RAM
+                historyData = cpuRaw.map((item, index) => {
+                    let ramVal = ramRaw[index] ? ramRaw[index].value : 0;
+                    
+                    // Xử lý auto-scale: Nếu RAM trả về MB (số to > 100), tự ép về phần trăm (%)
+                    if (ramVal > 100) {
+                        ramVal = (ramVal / (host.ramTotal / (1024 * 1024))) * 100;
+                    }
+
+                    return {
+                        time: item.time,
+                        cpu: parseFloat(item.value.toFixed(1)),
+                        ram: parseFloat(ramVal.toFixed(1))
+                    };
+                });
+            } catch (promError) {
+                console.error("Lỗi lấy dữ liệu Prometheus (Line Chart sẽ rỗng):", promError.message);
+            }
 
             return {
                 cpu: {
@@ -156,7 +208,8 @@ class VmServices {
                 disk: {
                     percent: parseFloat(diskPercent),
                     detail: `${diskUsedGB.toFixed(1)} / ${diskTotalGB.toFixed(1)} GB`
-                }
+                },
+                history: historyData // Dữ liệu lịch sử 1 tiếng qua cho biểu đồ Line Chart
             };
         } catch (error) {
             console.error("Lỗi lấy thông số hệ thống ESXi:", error);
