@@ -11,7 +11,7 @@ class VmServices {
         try {
             // Đã fix lỗi biến data.ram -> ram
             await EsxiServices.checkAvailableResources(ram, disk);
-            
+
             vm = await DatabaseService.create(Vm, {
                 vm_name: fullVmName, vm_username: vmUsername, cpu, ram, disk, user_id: userId, status: 'pending'
             });
@@ -19,7 +19,7 @@ class VmServices {
             await EsxiServices.clone(fullVmName, osName);
             await EsxiServices.changeHardware(fullVmName, cpu, ram, disk);
             await EsxiServices.powerOn(fullVmName);
-            
+
             const ip = await EsxiServices.getIp(fullVmName);
             await EsxiServices.configNetworkAndUser(fullVmName, vmUsername, vmPassword);
 
@@ -77,7 +77,7 @@ class VmServices {
     delete = async (vmName, userId) => {
         const vm = await DatabaseService.find(Vm, { vm_name: vmName, user_id: userId });
         if (!vm) throw new Error("Không tìm thấy VM");
-        
+
         await EsxiServices.powerOff(vmName);
         await EsxiServices.destroy(vmName);
         await DatabaseService.deleteById(Vm, vm._id);
@@ -93,22 +93,32 @@ class VmServices {
 
             const totalCpuMhz = host.cpuMhz * host.cpuCores;
             const cpuPercent = ((host.cpuUsed / totalCpuMhz) * 100).toFixed(1);
-            
-            const ramTotalGB = host.ramTotal / (1024 ** 3);
-            const ramUsedGB = host.ramUsedMB / 1024;
-            const ramPercent = ((ramUsedGB / ramTotalGB) * 100).toFixed(1);
+
+            const ramTotalMB = host.ramTotal / (1024 * 1024);
+            const ramUsedMB = host.ramUsedMB;
+            const ramAvailableMB = Math.max(0, ramTotalMB - ramUsedMB);
 
             const diskTotalGB = disk.capacity / (1024 ** 3);
             const diskFreeGB = disk.free / (1024 ** 3);
-            const diskUsedGB = diskTotalGB - diskFreeGB;
-            const diskPercent = ((diskUsedGB / diskTotalGB) * 100).toFixed(1);
 
             const historyData = await MetricsServices.getHistoryData(host);
 
             return {
-                cpu: { percent: parseFloat(cpuPercent), detail: `${host.cpuUsed} / ${totalCpuMhz} MHz` },
-                ram: { percent: parseFloat(ramPercent), detail: `${ramUsedGB.toFixed(1)} / ${ramTotalGB.toFixed(1)} GB` },
-                disk: { percent: parseFloat(diskPercent), detail: `${diskUsedGB.toFixed(1)} / ${diskTotalGB.toFixed(1)} GB` },
+                cpu: {
+                    percent: parseFloat(cpuPercent),
+                    detail: `${host.cpuUsed} / ${totalCpuMhz} MHz`,
+                    totalCores: host.cpuCores // Trả về tổng core để chặn trên UI
+                },
+                ram: {
+                    percent: ((ramUsedMB / ramTotalMB) * 100).toFixed(1),
+                    detail: `${(ramUsedMB / 1024).toFixed(1)} / ${(ramTotalMB / 1024).toFixed(1)} GB`,
+                    availableMB: Math.floor(ramAvailableMB) // Trả về số MB còn trống
+                },
+                disk: {
+                    percent: (((diskTotalGB - diskFreeGB) / diskTotalGB) * 100).toFixed(1),
+                    detail: `${(diskTotalGB - diskFreeGB).toFixed(1)} / ${diskTotalGB.toFixed(1)} GB`,
+                    availableGB: Math.floor(diskFreeGB) // Trả về số GB còn trống
+                },
                 history: historyData
             };
         } catch (error) {
