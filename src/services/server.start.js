@@ -15,6 +15,7 @@ export const serverStart = async (app) => {
         originalError(`[${dayjs().format('YY-MM-DD HH:mm:ss')}] [ERROR]`, ...args);
     };
     cronService.startPolling();
+    cronService.autoDelete();
     await databaseConfig();
     app.listen(port, () => console.log('Server is running'));
 
