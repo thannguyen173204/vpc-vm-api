@@ -55,7 +55,7 @@ class VmServices {
         }
         await DatabaseService.updateById(Vm, vm._id, { cpu, ram, disk });
     }
-    
+
     clone = async (fullVmName, osName) => {
         const scriptPath = process.env.CLONE_VM_SCRIPT;
         await cmdService('bash', [scriptPath], {
@@ -108,7 +108,7 @@ class VmServices {
     findManyByUser = async (userId) => {
         return await DatabaseService.findMany(Vm, { user_id: userId });
     }
-    
+
     systemStat = async () => {
         try {
             const hostCmd = `govc host.info -json | jq '.hostSystems[0].summary | {
@@ -144,9 +144,6 @@ class VmServices {
             const diskUsedGB = diskTotalGB - diskFreeGB;
             const diskPercent = ((diskUsedGB / diskTotalGB) * 100).toFixed(1);
 
-            // ==============================================================
-            // PHẦN MỚI: GỌI PROMETHEUS ĐỂ LẤY LỊCH SỬ CHO BIỂU ĐỒ LINE CHART
-            // ==============================================================
             const end = new Date().toISOString();
             const start = new Date(Date.now() - 60 * 60 * 1000).toISOString(); // 1 tiếng trước
             const step = '1m'; // Mỗi phút 1 điểm
@@ -154,7 +151,7 @@ class VmServices {
             let historyData = [];
 
             try {
-                const queryCpu = 'vmware_host_cpu_usage_average'; 
+                const queryCpu = 'vmware_host_cpu_usage_average';
                 const queryRam = 'vmware_host_memory_usage'; // Tên biến RAM chuẩn mà bạn vừa check
 
                 const [promCpu, promRam] = await Promise.all([
@@ -162,7 +159,6 @@ class VmServices {
                     axios.get(`${PROMETHEUS_API}/query_range`, { params: { query: queryRam, start, end, step } })
                 ]);
 
-                // Hàm format data từ Prometheus
                 const formatData = (promData) => {
                     if (!promData.data?.data?.result || promData.data.data.result.length === 0) return [];
                     return promData.data.data.result[0].values.map(item => {
@@ -177,11 +173,9 @@ class VmServices {
                 const cpuRaw = formatData(promCpu);
                 const ramRaw = formatData(promRam);
 
-                // Gộp Data CPU và RAM
                 historyData = cpuRaw.map((item, index) => {
+                    const cpuValInPercent = (item.value / totalCpuMhz) * 100;
                     let ramVal = ramRaw[index] ? ramRaw[index].value : 0;
-                    
-                    // Xử lý auto-scale: Nếu RAM trả về MB (số to > 100), tự ép về phần trăm (%)
                     if (ramVal > 100) {
                         ramVal = (ramVal / (host.ramTotal / (1024 * 1024))) * 100;
                     }
