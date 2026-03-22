@@ -174,12 +174,14 @@ class VmServices {
                 const ramRaw = formatData(promRam);
 
                 historyData = cpuRaw.map((item, index) => {
-                    const cpuValInPercent = (item.value / totalCpuMhz) * 100;
+                    const cpuTotalMhz = host.cpuMhz * host.cpuCores;
+                    const cpuPercentValue = (item.value / cpuTotalMhz) * 100;
+
                     let ramVal = ramRaw[index] ? ramRaw[index].value : 0;
+
                     if (ramVal > 100) {
                         ramVal = (ramVal / (host.ramTotal / (1024 * 1024))) * 100;
                     }
-
                     return {
                         time: item.time,
                         cpu: parseFloat(item.value.toFixed(1)),
