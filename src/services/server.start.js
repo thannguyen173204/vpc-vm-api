@@ -12,7 +12,7 @@ export const serverStart = async (app) => {
     };
 
     console.error = (...args) => {
-        originalError(`[${dayjs().format('YY-MM-DD HH:mm:ss')}] [ERROR]`, ...args);
+        originalError(`[${dayjs().format('DD/MM/YYYY HH:mm:ss')}] [ERROR]`, ...args);
     };
     cronService.startPolling();
     cronService.autoDelete();
