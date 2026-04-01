@@ -44,7 +44,7 @@ class CronServices {
     autoDelete = async () => {
         cron.schedule('* * * * *', async () => {
             try {
-                const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000);
+                const tenMinsAgo = new Date(Date.now() - 9999 * 60 * 1000);
 
                 // FIX: Tìm các VM tạo quá 10 phút (không phân biệt status để dọn sạch rác)
                 const expiredVms = await DatabaseService.findMany(Vm, {
