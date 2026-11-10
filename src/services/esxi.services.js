@@ -18,8 +18,7 @@ class EsxiServices {
     async powerOn(vmName) {
         return cmdService('govc', ['vm.power', '-on', vmName]);
     }
-
-    // Thêm catch() để lỡ VM đang tắt rồi thì lệnh off không làm sập app
+    
     async powerOff(vmName) {
         return cmdService('govc', ['vm.power', '-off', vmName]).catch(() => {});
     }
@@ -64,7 +63,6 @@ class EsxiServices {
         return true;
     }
 
-    // Dành cho Cronjob
     async getRunningVms() {
         const res = await cmdService('govc', ['find', '/', '-type', 'm', '-runtime.powerState', 'poweredOn'], { silent: true });
         return res.stdout.split('\n').filter(p => p.trim() !== '').map(path => path.split('/').pop());
