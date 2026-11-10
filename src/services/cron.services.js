@@ -2,13 +2,12 @@ import cron from 'node-cron';
 import Vm from '../models/vm.model.js';
 import DatabaseService from './db.services.js';
 import EsxiServices from './esxi.services.js';
-import VmServices from './vm.services.js'; // FIX: Đã import
+import VmServices from './vm.services.js';
 
 class CronServices {
     startPolling = () => {
         cron.schedule('*/1 * * * * *', async () => {
             try {
-                // Dùng EsxiServices cho gọn
                 const runningPaths = await EsxiServices.getRunningVms();
                 const runningVms = new Set(runningPaths);
 
@@ -36,7 +35,6 @@ class CronServices {
                     }
                 }
             } catch (error) {
-                // Ignore silent errors during polling
             }
         });
     }
@@ -45,15 +43,12 @@ class CronServices {
         cron.schedule('* * * * *', async () => {
             try {
                 const tenMinsAgo = new Date(Date.now() - 9999 * 60 * 1000);
-
-                // FIX: Tìm các VM tạo quá 10 phút (không phân biệt status để dọn sạch rác)
                 const expiredVms = await DatabaseService.findMany(Vm, {
                     createdAt: { $lte: tenMinsAgo }
                 });
 
                 for (const vm of expiredVms) {
                     console.log(`[Auto-Clean] Đang thu hồi máy ảo hết hạn: ${vm.vm_name}`);
-                    // FIX: Truyền đủ vm_name và user_id
                     await VmServices.delete(vm.vm_name, vm.user_id).catch(err => {
                         console.error(`[Auto-Clean] Lỗi xóa ${vm.vm_name}:`, err.message);
                     });
