@@ -9,7 +9,6 @@ class VmServices {
         let vm = null;
 
         try {
-            // Đã fix lỗi biến data.ram -> ram
             await EsxiServices.checkAvailableResources(ram, disk);
 
             vm = await DatabaseService.create(Vm, {
@@ -41,7 +40,6 @@ class VmServices {
         if (vm.status === 'running') throw new Error("Yêu cầu tắt VM trước khi cấu hình");
 
         await EsxiServices.changeHardware(vmName, cpu, ram, disk);
-        // Note: Nếu cần cập nhật pass OS thì gọi thêm configNetworkAndUser ở đây
         await DatabaseService.updateById(Vm, vm._id, { cpu, ram, disk });
         return vm;
     }
@@ -101,7 +99,6 @@ class VmServices {
             const diskTotalGB = disk.capacity / (1024 ** 3);
             const diskFreeGB = disk.free / (1024 ** 3);
 
-            // BẮT BUỘC TRUYỀN timeRange XUỐNG DƯỚI NÀY
             const historyData = await MetricsServices.getHistoryData(host, timeRange);
 
             return {
